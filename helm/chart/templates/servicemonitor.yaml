@@ -1,0 +1,16 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: jobs-exporter
+  labels:
+    {{- include "jobs-exporter.labels" . | nindent 4 }}
+    release: monitoring-kube-prometheus-stack
+spec:
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /
+  selector:
+    matchLabels:
+      {{- include "jobs-exporter.selectorLabels" . | nindent 4 }}
