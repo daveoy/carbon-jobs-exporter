@@ -1,0 +1,84 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jobs-exporter
+  namespace: carbon-utils
+  labels:
+    app: jobs-exporter
+spec:
+  selector:
+    app: jobs-exporter
+  type: ClusterIP
+  ports:
+  - port: 9666
+    targetPort: 9666
+    name: metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: jobs-exporter
+  namespace: carbon-utils
+  labels:
+    app: jobs-exporter
+    release: monitoring-kube-prometheus-stack
+spec:
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /
+  selector:
+    matchLabels:
+      app: jobs-exporter
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobs-exporter
+  namespace: carbon-utils
+spec:
+  selector:
+    matchLabels:
+      app: jobs-exporter
+  template:
+    metadata:
+      labels:
+        app: jobs-exporter
+    spec:
+      volumes:
+      - name: secrets-store-inline
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "regcred"
+      - name: weka-jobs
+        nfs:
+          server: 10.70.50.117
+          path: /vfx
+      imagePullSecrets:
+      - name: regcred
+      serviceAccountName: image-puller
+      containers:
+      - name: jobs-exporter
+        image: registry.carbonvfx.com/engineering/jobs-exporter:1688590758
+        env:
+        - name: JOBS_PATH
+          value: '/weka/vfx/vfx/Jobs'
+        - name: EXPORTER_PORT
+          value: '9666'
+        ports:
+          - containerPort: 9666
+            name: metrics
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+        volumeMounts:
+          - name: secrets-store-inline
+            mountPath: "/secrets-store"
+            readOnly: true
+          - name: weka-jobs
+            mountPath: /weka/vfx/
+            readOnly: true

@@ -1,0 +1,12 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: jobs-exporter
+build:
+  artifacts:
+    - image: registry.carbonvfx.com/engineering/jobs-exporter
+      docker:
+        dockerfile: Dockerfile
+manifests:
+  rawYaml:
+    - jobs-exporter.yaml
