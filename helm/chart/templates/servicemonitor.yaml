@@ -13,4 +13,4 @@ spec:
     path: /
   selector:
     matchLabels:
-      {{- include "jobs-exporter.selectorLabels" . | nindent 4 }}
+      {{- include "jobs-exporter.selectorLabels" . | nindent 5 }}
