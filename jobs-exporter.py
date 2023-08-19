@@ -29,8 +29,8 @@ class Project:
         except:
             print(self.__dict__)
 
+projectsizemetric = Gauge('carbon_vfx_projects', 'VFX project directory size',labelnames=['path','projectname'])
 start_http_server(int(os.environ.get('EXPORTER_PORT',9100)))
 while True:
-    projectsizemetric = Gauge('carbon_vfx_projects', 'VFX project directory size',labelnames=['path','projectname'])
     jobs = Jobs()
     time.sleep(30)
