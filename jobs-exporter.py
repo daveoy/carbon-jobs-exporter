@@ -16,6 +16,18 @@ class Jobs:
         return out.decode().strip().split('\t')[0]
     def get_projects(self):
         return [Project(name=project,size=self.get_project_size(os.path.join(self.projects_path,project)),path=os.path.join(self.projects_path,project)) for project in self.projects_list]
+    def remove_unwanted_labelsets(self,metrics: Gauge):
+        metrics_labelsets = [x for x in metrics._metrics.keys()]
+        active_labelsets = [(p.path,p.name) for p in self.projects]
+        # remove active_labelsets from metrics_labelsets
+        for x in active_labelsets:
+            if x in metrics_labelsets:
+                metrics_labelsets.remove(x)
+        # if anything is left in the list, remove them
+        if len(metrics_labelsets) > 0:
+            print(f"purging old metrics {metrics_labelsets}")
+            [projectsizemetric.remove(x[0],x[1]) for x in metrics_labelsets]
+
 
 class Project:
     def __init__(self,name,size,path):
@@ -29,8 +41,10 @@ class Project:
         except:
             print(self.__dict__)
 
+
 projectsizemetric = Gauge('carbon_vfx_projects', 'VFX project directory size',labelnames=['path','projectname'])
 start_http_server(int(os.environ.get('EXPORTER_PORT',9100)))
 while True:
     jobs = Jobs()
+    jobs.remove_unwanted_labelsets(projectsizemetric)
     time.sleep(30)
